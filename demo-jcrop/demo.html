@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0,minimum-scale=1.0,user-scalable=0" />
+		<style type="text/css">
+			*{
+				touch-action: pan-y;
+				margin: 0;
+				padding: 0;
+				font-size: 16px;
+			}
+			#handleWrap{
+				margin-top: 35px;
+				text-align: center;
+			}
+			#fileHandle,
+			#cropHandle{
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				width: 150px;
+				height: 45px;
+				background-color: darkcyan;
+				color: #fff;
+			}
+			#handle{
+				border: none;
+				outline: none;
+			}
+			#fileImgWrap {
+				padding: 15px 0;
+			}
+		</style>
+		<link rel="stylesheet" href="css/jquery.Jcrop.css" type="text/css">
+	</head>
+	<body>
+		<div id="handleWrap">
+			<label>
+				<span id="fileHandle">上传图片</span>
+				<input id="fileInput" type="file" accept="image/*" style="display: none;" />
+			</label>
+			<span id="cropHandle">截取图片</span>
+		</div>
+		<!--handleWrap-->
+		<div id="fileImgWrap">
+			<img id="fileImg" src=""  crossOrigin="true" style="display: none;">
+		</div>
+		<!--fileWrap-->
+		<div id="previewWrap">
+			<img id="previewImg" src='' style="display: none;" />
+		</div>
+		<!--preview-->
+	</body>
+	<script type="text/javascript" src="js/jquery.min.js"></script>
+	<script type="text/javascript" src="js/jquery.Jcrop.js"></script>
+	<script type="text/javascript">
+		
+		$(function() {
+			var $ = window.$;
+			var fileInput = $('#fileInput');
+			var cropHandle = $('#cropHandle');
+			var fileImg = $('#fileImg');
+			var previewImg = $('#previewImg');
+			var jcropApi;
+			var fileAuto = false,
+				cropAuto = false;
+			var cutAss = {
+				cutImgWidth: 0,
+				cutImgHeight: 0,
+				moveView: {},
+				canvasEle: null,
+				baseUrl:''
+			};
+			// 实例裁剪框监听
+			var upView = function (o) {
+				Object.assign( cutAss.moveView , o );
+			};
+			// 实例创建回调函数
+			var cropBack =function(){
+				var gb = this.getBounds(),
+					cw = gb[0],
+					ch = gb[1];	
+				//要设置的初始图片宽高
+				var scale = 0.45,
+					cutWidth = cw*scale,
+					cutHeight = ch*scale,
+					mLeft = ( cw - cutWidth)/2,
+					mTop = ( ch - cutHeight)/2;
+				// 设置居中
+				this.setSelect([mLeft,mTop,mLeft+cutWidth,mTop+cutHeight]);
+				// 设置居中 - animate
+//				this.animateTo([mLeft,mTop,mLeft+cutWidth,mTop+cutHeight]);
+				// 暴露实例对象
+				jcropApi = this; 
+				// 暴露实例图片的宽高
+				Object.assign(cutAss,{
+					cutImgWidth: cw,
+					cutImgHeight: ch,
+				});
+			};
+			// 上传要剪切图片
+			fileInput.change(function(){
+				var t = this;
+				var fileCtn = t.files[0];
+				if( fileCtn ){
+					var fileReady = new FileReader();
+					fileReady.readAsDataURL( fileCtn );
+					fileReady.onload = function(){
+						var baseUrl = this.result;
+						fileImg.attr('src',baseUrl)[0];
+						//判断实例创建
+						if( fileAuto ){
+							jcropApi.setImage( baseUrl , cropBack );
+							cropAuto = false , previewImg.hide();
+						}else{
+							fileAuto = true, fileImg.show();
+							fileImg.Jcrop({
+								bgFade: true,   //	背景渐变
+								bgOpacity: .5,  //	背景透明度
+								allowSelect:false, // 新的裁剪框
+								allowMove: true, //	移动裁剪框
+								allowResize: true, // 调整裁剪框尺寸
+	//							aspectRatio: 1,  //宽高比例		
+								onChange: upView, //截取框变化事件，主要用于实时更新预览图
+								onSelect: upView, //截取框选定事件，主要用于获得截取框的4个坐标点
+							},
+							cropBack);
+						}
+						
+					}
+				}
+				
+			});
+			// 裁剪图片
+			cropHandle.click(function(e){
+				e.stopPropagation();
+				if( fileAuto ){
+					var co = cutAss,
+						coW = co.cutImgWidth,
+						coH = co.cutImgHeight,
+						coM = co.moveView,
+						cvE = co.canvasEle,
+						cvC;
+					var baseUrl ;	
+					var copy = Object.assign;
+						
+					// 创建canvas剪切图片	这里可以优化   保存canvas对象实例  
+					
+					if( cvE == null ){
+						cvE = document.createElement("canvas");
+						copy(co,{
+							canvasEle: cvE
+						});
+					}
+					cvC = cvE.getContext('2d');
+					copy(cvE,{
+						width: coW,
+						height: coH
+					});
+					
+					cvC.rect(0, 0, coM.w, coM.h);
+					cvC.clip();
+					cvC.drawImage(fileImg[0], -coM.x, -coM.y, coW, coH);
+					baseUrl = cvE.toDataURL('image/png');
+					// callback
+					previewImg.attr("src", baseUrl);
+					// 暴露 url
+					co.baseUrl = baseUrl;
+					cropAuto || ( cropAuto = true,previewImg.show() );
+					
+				}else{
+					alert('请上传图片！');
+				}
+				
+			});
+			
+		});
+	</script>
+
+</html>
