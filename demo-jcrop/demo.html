@@ -31,6 +31,7 @@
 			#fileImgWrap {
 				padding: 15px 0;
 			}
+			
 		</style>
 		<link rel="stylesheet" href="css/jquery.Jcrop.css" type="text/css">
 	</head>
@@ -44,7 +45,7 @@
 		</div>
 		<!--handleWrap-->
 		<div id="fileImgWrap">
-			<img id="fileImg" src=""  crossOrigin="true" style="display: none;">
+			<img id="fileImg" src=""  crossOrigin="true" style="display: none;max-width: 100%;">
 		</div>
 		<!--fileWrap-->
 		<div id="previewWrap">
@@ -55,14 +56,13 @@
 	<script type="text/javascript" src="js/jquery.min.js"></script>
 	<script type="text/javascript" src="js/jquery.Jcrop.js"></script>
 	<script type="text/javascript">
-		
+		var jcropApi;
 		$(function() {
 			var $ = window.$;
 			var fileInput = $('#fileInput');
 			var cropHandle = $('#cropHandle');
 			var fileImg = $('#fileImg');
 			var previewImg = $('#previewImg');
-			var jcropApi;
 			var fileAuto = false,
 				cropAuto = false;
 			var cutAss = {
@@ -108,25 +108,26 @@
 					fileReady.readAsDataURL( fileCtn );
 					fileReady.onload = function(){
 						var baseUrl = this.result;
-						fileImg.attr('src',baseUrl)[0];
+						fileImg.attr('src',baseUrl);
 						//判断实例创建
 						if( fileAuto ){
-							jcropApi.setImage( baseUrl , cropBack );
+							jcropApi.destroy();
 							cropAuto = false , previewImg.hide();
 						}else{
 							fileAuto = true, fileImg.show();
-							fileImg.Jcrop({
-								bgFade: true,   //	背景渐变
-								bgOpacity: .5,  //	背景透明度
-								allowSelect:false, // 新的裁剪框
-								allowMove: true, //	移动裁剪框
-								allowResize: true, // 调整裁剪框尺寸
-	//							aspectRatio: 1,  //宽高比例		
-								onChange: upView, //截取框变化事件，主要用于实时更新预览图
-								onSelect: upView, //截取框选定事件，主要用于获得截取框的4个坐标点
-							},
-							cropBack);
-						}
+						}	
+						fileImg.Jcrop({
+							bgFade: true,   //	背景渐变
+							bgOpacity: .5,  //	背景透明度
+							allowSelect:false, // 新的裁剪框
+							allowMove: true, //	移动裁剪框
+							allowResize: true, // 调整裁剪框尺寸
+//								aspectRatio: 0,  //宽高比例		
+							onChange: upView, //截取框变化事件，主要用于实时更新预览图
+							onSelect: upView, //截取框选定事件，主要用于获得截取框的4个坐标点
+						},
+						cropBack);
+						
 						
 					}
 				}
